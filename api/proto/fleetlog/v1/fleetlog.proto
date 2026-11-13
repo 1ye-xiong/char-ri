@@ -1,0 +1,316 @@
+syntax = "proto3";
+
+package fleetlog.v1;
+
+option go_package = "github.com/BwCloudWeGo/bw-cli/api/gen/fleetlog/v1;fleetlogv1";
+
+// FleetLogService 是测试车队日志策略闭环的 gRPC 边界。
+// 身份（研发申请人/审批负责人/发布运营）通过 authorization 元数据传递，
+// 车辆身份通过 x-vehicle-token 元数据传递，请求体中的身份字段不参与鉴权。
+service FleetLogService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+
+  rpc CreateApplication(CreateApplicationRequest) returns (ApplicationItem);
+  rpc UpdateApplication(UpdateApplicationRequest) returns (ApplicationItem);
+  rpc SubmitApplication(SubmitApplicationRequest) returns (ApplicationItem);
+  rpc ApproveApplication(ApproveApplicationRequest) returns (ApplicationItem);
+  rpc RejectApplication(RejectApplicationRequest) returns (ApplicationItem);
+  rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
+
+  rpc CreateActivity(CreateActivityRequest) returns (ActivityDetailResponse);
+  rpc StartPilot(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc ConfirmPromotion(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc StopActivity(StopActivityRequest) returns (ActivityDetailResponse);
+  rpc ApproveRestore(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc StartRestore(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc MarkCompleted(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc MarkRestored(ActivityActionRequest) returns (ActivityDetailResponse);
+  rpc GetActivity(GetActivityRequest) returns (ActivityDetailResponse);
+  rpc GetCurrentActivity(CurrentActivityRequest) returns (ActivityDetailResponse);
+  rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse);
+
+  rpc ListVehicles(ListVehiclesRequest) returns (ListVehiclesResponse);
+  rpc SetVehicleOnline(SetVehicleOnlineRequest) returns (VehicleResponse);
+  rpc PullConfig(PullConfigRequest) returns (PullConfigResponse);
+  rpc ReportReceipt(ReportReceiptRequest) returns (ReceiptResultResponse);
+
+  rpc ListRejectedReceipts(ListRejectedReceiptsRequest) returns (ListRejectedReceiptsResponse);
+  rpc ListAudits(ListAuditsRequest) returns (ListAuditsResponse);
+}
+
+message LoginRequest {
+  string account = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  string user_id = 2;
+  string role = 3;
+  string display_name = 4;
+  int32 timeout_seconds = 5;
+}
+
+message CreateApplicationRequest {
+  string reason = 1;
+  int32 interval_seconds = 2;
+}
+
+message UpdateApplicationRequest {
+  string id = 1;
+  string reason = 2;
+  int32 interval_seconds = 3;
+}
+
+message SubmitApplicationRequest {
+  string id = 1;
+}
+
+message ApproveApplicationRequest {
+  string id = 1;
+}
+
+message RejectApplicationRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message ListApplicationsRequest {}
+
+message ListApplicationsResponse {
+  repeated ApplicationItem items = 1;
+}
+
+message ApplicationVersionItem {
+  int32 version_no = 1;
+  string reason = 2;
+  int32 interval_seconds = 3;
+  string status = 4;
+  string reject_reason = 5;
+  string decided_by = 6;
+  string created_at = 7;
+}
+
+message ApplicationItem {
+  string id = 1;
+  int32 version_no = 2;
+  string requester_id = 3;
+  string requester_name = 4;
+  string reason = 5;
+  int32 interval_seconds = 6;
+  string status = 7;
+  string reject_reason = 8;
+  string decided_by = 9;
+  string submitted_at = 10;
+  string decided_at = 11;
+  string created_at = 12;
+  string activity_id = 13;
+  bool can_edit = 14;
+  bool can_submit = 15;
+  bool can_decide = 16;
+  repeated ApplicationVersionItem history = 17;
+}
+
+message CreateActivityRequest {
+  string application_id = 1;
+  repeated string pilot_vehicles = 2;
+}
+
+message ActivityActionRequest {
+  string id = 1;
+}
+
+message StopActivityRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message GetActivityRequest {
+  string id = 1;
+}
+
+message CurrentActivityRequest {}
+
+message ListActivitiesRequest {}
+
+message ListActivitiesResponse {
+  repeated ActivityItem items = 1;
+}
+
+message ActivityItem {
+  string id = 1;
+  string application_id = 2;
+  int32 interval_seconds = 3;
+  repeated string pilot_vehicles = 4;
+  repeated string promotion_vehicles = 5;
+  string status = 6;
+  string created_by = 7;
+  string created_at = 8;
+  string stopped_by = 9;
+  string stopped_at = 10;
+  string stop_scope = 11;
+  string restore_approved_by = 12;
+  string restore_approved_at = 13;
+  string restore_started_by = 14;
+  string restore_started_at = 15;
+  string completed_by = 16;
+  string completed_at = 17;
+  string restored_by = 18;
+  string restored_at = 19;
+}
+
+message VehicleRowItem {
+  string vehicle_id = 1;
+  bool released = 2;
+  string batch = 3;
+  int32 version = 4;
+  int32 baseline_interval = 5;
+  int32 expected_interval = 6;
+  int32 effective_interval = 7;
+  int32 effective_version = 8;
+  string status = 9;
+  string failure_reason = 10;
+  string dispatched_at = 11;
+  string receipt_at = 12;
+  string timeout_at = 13;
+  bool late = 14;
+  int32 duplicate_receipts = 15;
+}
+
+message SummaryItem {
+  int32 total = 1;
+  int32 released = 2;
+  int32 not_released = 3;
+  int32 success = 4;
+  int32 failed = 5;
+  int32 timeout = 6;
+  int32 waiting = 7;
+  int32 rejected_receipts = 8;
+  int32 effective = 9;
+}
+
+message ActionsItem {
+  bool can_start_pilot = 1;
+  bool can_promote = 2;
+  bool can_stop = 3;
+  bool can_approve_restore = 4;
+  bool can_start_restore = 5;
+  bool can_mark_completed = 6;
+  bool can_mark_restored = 7;
+  string promote_blocked_reason = 8;
+}
+
+message RejectedReceiptItem {
+  string id = 1;
+  string vehicle_id = 2;
+  int32 version = 3;
+  string reason = 4;
+  string detail = 5;
+  string reported_at = 6;
+}
+
+message TimeoutEventItem {
+  string vehicle_id = 1;
+  int32 version = 2;
+  string timed_out_at = 3;
+  string resolved_at = 4;
+}
+
+message AuditItem {
+  string actor_id = 1;
+  string actor_role = 2;
+  string action = 3;
+  string target_type = 4;
+  string target_id = 5;
+  string detail = 6;
+  string created_at = 7;
+}
+
+message ActivityDetailResponse {
+  ActivityItem activity = 1;
+  ApplicationItem application = 2;
+  repeated VehicleRowItem rows = 3;
+  SummaryItem summary = 4;
+  repeated RejectedReceiptItem rejected_receipts = 5;
+  repeated TimeoutEventItem timeout_events = 6;
+  repeated AuditItem audits = 7;
+  ActionsItem actions = 8;
+  int32 timeout_seconds = 9;
+  string server_time = 10;
+}
+
+message ListVehiclesRequest {}
+
+message ListVehiclesResponse {
+  repeated VehicleItem items = 1;
+}
+
+message VehicleItem {
+  string id = 1;
+  bool online = 2;
+  int32 effective_interval = 3;
+  int32 effective_version = 4;
+  int32 current_version = 5;
+  int32 expected_interval = 6;
+  string latest_release_status = 7;
+}
+
+message SetVehicleOnlineRequest {
+  string id = 1;
+  bool online = 2;
+}
+
+message VehicleResponse {
+  VehicleItem vehicle = 1;
+}
+
+message PullConfigRequest {
+  string vehicle_id = 1;
+}
+
+message PullConfigResponse {
+  string vehicle_id = 1;
+  int32 version = 2;
+  int32 interval_seconds = 3;
+  bool online = 4;
+  string pulled_at = 5;
+  string release_status = 6;
+  bool has_release = 7;
+}
+
+message ReportReceiptRequest {
+  string vehicle_id = 1;
+  int32 version = 2;
+  string result = 3;
+  string failure_reason = 4;
+}
+
+message ReceiptResultResponse {
+  bool accepted = 1;
+  string reason = 2;
+  string message = 3;
+  string vehicle_id = 4;
+  int32 version = 5;
+  string release_status = 6;
+  string activity_status = 7;
+  int32 effective_interval = 8;
+  int32 effective_version = 9;
+}
+
+message ListRejectedReceiptsRequest {
+  string activity_id = 1;
+  string vehicle_id = 2;
+}
+
+message ListRejectedReceiptsResponse {
+  repeated RejectedReceiptItem items = 1;
+}
+
+message ListAuditsRequest {
+  string activity_id = 1;
+  int32 limit = 2;
+}
+
+message ListAuditsResponse {
+  repeated AuditItem items = 1;
+}

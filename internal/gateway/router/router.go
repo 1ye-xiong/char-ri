@@ -3,6 +3,8 @@ package router
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -16,6 +18,7 @@ import (
 func New(clients *client.Clients, log *zap.Logger, middlewareCfg config.MiddlewareConfig) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	loadTemplates(r)
 	r.Use(
 		middleware.CORS(middlewareCfg.CORS),
 		middleware.RequestID(),
@@ -27,6 +30,17 @@ func New(clients *client.Clients, log *zap.Logger, middlewareCfg config.Middlewa
 	})
 
 	registerHealthRoutes(r)
+	registerFleetLogPages(r)
 	registerAPIRoutes(r, clients, log, middlewareCfg)
 	return r
+}
+
+// loadTemplates 在模板目录存在时加载 HTML 与静态资源，单元测试工作目录下自动跳过。
+func loadTemplates(r *gin.Engine) {
+	if matches, err := filepath.Glob("web/templates/*/*.html"); err == nil && len(matches) > 0 {
+		r.LoadHTMLGlob("web/templates/*/*.html")
+	}
+	if info, err := os.Stat(filepath.Join("web", "static")); err == nil && info.IsDir() {
+		r.Static("/static", filepath.Join("web", "static"))
+	}
 }

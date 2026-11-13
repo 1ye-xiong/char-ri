@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>车辆模拟器 · 测试车队日志策略</title>
+  <link rel="stylesheet" href="/static/fleetlog/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">V</span>
+    <div>
+      <h1>车辆模拟器</h1>
+      <p>用车辆令牌拉取"面向自己的最新已发布版本"并上报回执；令牌决定车辆身份，请求体编号不一致会被判为跨车回执。</p>
+    </div>
+  </div>
+  <div class="session">
+    <a class="btn ghost" href="/fleetlog">返回工作台</a>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="card-head">
+      <h2>模拟车辆状态</h2>
+      <div class="card-actions">
+        <span class="muted" id="vehicleTimeoutInfo"></span>
+        <button class="btn ghost" id="refreshVehicleStates">刷新状态</button>
+      </div>
+    </div>
+    <p class="muted">V2 初始离线：离线车辆拉取会被服务端拒绝；需要演示离线晚拉取时，由运营在工作台切换在线状态后再拉取。</p>
+    <div id="vehicleCards" class="vehicle-grid"></div>
+  </section>
+
+  <section class="card">
+    <h2>回执说明</h2>
+    <ul class="muted list">
+      <li>成功/失败回执必须匹配该车当前期望版本，旧版本回执会被记为 stale_version。</li>
+      <li>重复成功回执只记录 duplicate_receipt，不重复记账。</li>
+      <li>跨车回执：保持本车令牌，把"回执车辆编号"改成其他车辆提交，用于验证服务端拒绝。</li>
+      <li>失败回执必须填写失败原因，失败不改变既有生效值。</li>
+    </ul>
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/fleetlog/app.js"></script>
+<script src="/static/fleetlog/vehicles.js"></script>
+</body>
+</html>

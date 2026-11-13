@@ -26,13 +26,17 @@ services:
     name: order-service
     port: 9100
     target: 127.0.0.1:9100
+  fleetlog:
+    name: fleetlog-service
+    port: 9300
+    target: 127.0.0.1:9300
 
 database:
   driver: mysql
   dsn: "账号:密码@tcp(服务器IP:3306)/数据库?charset=utf8mb4&parseTime=True&loc=Local"
 
 mysql:
-  dsn: "账号:密码@tcp(服务器IP:3306)/数据库?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:root@tcp(127.0.0.1:3306)/char?charset=utf8mb4&parseTime=True&loc=Local"
   max_idle_conns: 10
   max_open_conns: 100
   conn_max_lifetime_seconds: 3600
@@ -249,3 +253,32 @@ log:
     max_backups: 14
     max_age_days: 7
     compress: true
+
+fleetlog:
+  timeout_seconds: 60
+  auth_secret: "fleetlog-demo-secret-2026"
+  issuer: fleetlog
+  accounts:
+    - account: rd_wang
+      password: rd123456
+      role: R
+      display_name: 研发-王工
+    - account: lead_li
+      password: lead123456
+      role: A
+      display_name: 负责人-李工
+    - account: ops_zhao
+      password: ops123456
+      role: O
+      display_name: 运营-赵工
+  vehicles:
+    - id: V1
+      token: v1-token
+    - id: V2
+      token: v2-token
+    - id: V3
+      token: v3-token
+    - id: V4
+      token: v4-token
+    - id: V5
+      token: v5-token
